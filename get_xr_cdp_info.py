@@ -247,7 +247,7 @@ if __name__ == '__main__':
 
     # wait for last ip in list to create file in wd
     wait_time()
-    # Retry any errors
+    # Retry errors
     retry_errors()
     # convert .json to .csv
     conv_csv()
