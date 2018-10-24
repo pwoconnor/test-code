@@ -40,7 +40,7 @@ def del_temp_files():
     '''
     # temp_files_dir = (wd)
     list_temp_dir = os.listdir(wd)
-    ext = (".json",".csv",".txt","log")
+    ext = (".json",".csv",".txt",".log")
     for item in list_temp_dir:
         if item.endswith(ext):
             os.remove(os.path.join(wd, item))
