@@ -1,21 +1,26 @@
-from netmiko import ConnectHandler
-import json, time,shutil
-import MySQLdb
-import getpass
-import textfsm
-import threading
-import pandas as pd
-import csv
 import os
-import paramiko
-import logging
 from os import listdir
 from os.path import isfile,join
+import json
+import time
+import shutil
+import getpass
+import threading
+import csv
+import logging
+
+from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetMikoTimeoutException
 from paramiko.ssh_exception import SSHException
+import paramiko
+import MySQLdb
+import textfsm
+import pandas as pd
+
+
 
 #set working directory for tmp files
-wd = ('/home/{set home directory}/python/temp/')
+wd = ('/home/{user dir}/python/temp/')
 #set up threading to utilize (max_threads count) concurrent SSH connections
 threads = []
 max_threads = 100
@@ -33,12 +38,12 @@ def del_temp_files():
     '''
     Delete temporary files that were created on the previous run
     '''
-    temp_files_dir = (wd)
-    list_temp_dir = os.listdir(temp_files_dir)
+    # temp_files_dir = (wd)
+    list_temp_dir = os.listdir(wd)
+    ext = (".json",".csv",".txt","log")
     for item in list_temp_dir:
-        ext = [".json",".csv",".txt","log"]
-        if item.endswith(tuple(ext)):
-            os.remove(os.path.join(temp_files_dir, item))
+        if item.endswith(ext):
+            os.remove(os.path.join(wd, item))
 
 #------------------------------------------------------------
 def get_db():
@@ -59,7 +64,7 @@ def devices_list():
     Pull list of IPs from MySQL to pass onto netmiko connections
     '''
     cursor = db.cursor()
-    cursor.execute("SELECT DISTINCT IP FROM RC_MDL WHERE netype LIKE 'MKT Router' AND  model_name LIKE '%ASR%'")
+    cursor.execute("SELECT DISTINCT IP FROM *TABLE WHERE *FEILD LIKE 'string' AND  *FEILD LIKE '%string%' limit 10")
     items = cursor.fetchall()
     devices = [x[0] for x in items] #convert tuple to list
     #print (devices)
@@ -92,10 +97,12 @@ def get_worker(ip,device):
         set_term = device.send_command("terminal length 0")
         cdp_info = device.send_command('show cdp neighbor detail', use_textfsm=True)
 
-
+        #inserting additional information loop
         for x in cdp_info:
+            #insert IP of device into dict for identification purposes
             x["ip"] = ip
-            # print x["dest_host"].split(".")[0]
+            # print(x["dest_host"].split(".")[0])
+            # these hostnames sometimes have .domain-name.net. I split that out as I do not need/want the domain name
             x["dest_host"] = x["dest_host"].split(".")[0]
             x["sysname"] = x["sysname"].split(".")[0]
 
@@ -105,11 +112,11 @@ def get_worker(ip,device):
             json.dump(cdp_info,file1)
 
     except Exception as error:
-        print ("Get_ERROR - " +str(error) + " " + str(ip))
+        print("Get_ERROR - " +str(error) + " " + str(ip))
         logger.error(". Get Error    {}   \t    {}".format(ip, error))
         #change file path to your directory
         with open (wd +"conn_error.txt", "a") as efile:
-            if ('unicode') in str(error):
+            if 'unicode' in str(error):
                 with open (wd +"conn_error_unicode.txt", "a") as efile2:
                     efile2.write(ip+"\n")
                     devices.remove(ip)
@@ -122,7 +129,7 @@ def retry_errors():
     '''
 
     if os.path.isfile(wd +'conn_error.txt'):
-        print "Retrying errors"
+        print("Retrying errors")
         hosts = open(wd +"conn_error.txt", "r").readlines()
 
         for host in hosts:
@@ -141,10 +148,12 @@ def retry_errors():
                 set_term = device.send_command("terminal length 0")
                 cdp_info = device.send_command('show cdp neighbor detail', use_textfsm=True)
 
-
+                #inserting additional information loop
                 for x in cdp_info:
+                    #insert IP of device into dict for identification purposes
                     x["ip"] = host
-                    # print x["dest_host"].split(".")[0]
+                    # print(x["dest_host"].split(".")[0])
+                    # these hostnames sometimes have .domain-name.net. I split that out as I do not need/want the domain name
                     x["dest_host"] = x["dest_host"].split(".")[0]
                     x["sysname"] = x["sysname"].split(".")[0]
 
@@ -161,10 +170,10 @@ def retry_errors():
 def wait_time():
         try:
             while ("temp_cdp_info_" + devices[-1] + ".json") not in os.listdir(wd):
-                print "Waiting..."
+                print("Waiting...")
                 time.sleep(5)
         except Exception as e100:
-            print ("DEVICE LIST ERROR: " + str(e100))
+            print("DEVICE LIST ERROR: " + str(e100))
 
 #-------------------------------------------------------------
 def conv_csv():
@@ -173,20 +182,19 @@ def conv_csv():
     '''
     path = (wd)
     os.chdir(wd)
-    print "Converting files to CSV"
+    print("Converting files to CSV")
     for file in os.listdir(path):
         if file.endswith(".json"):
             out_filename = file.split(".json")[0]
             df=pd.read_json(file)
             df.to_csv("results_"+ out_filename +".csv", header=False, index=False)
-    
 
 #-------------------------------------------------------------
 def insert_data():
     '''
     Insert data from CSV file into MySQL
     '''
-    print "Sending data to MySQL"
+    print("Sending data to MySQL")
     os.chdir(wd)
     cursor = db.cursor()
     try:
@@ -200,10 +208,10 @@ def insert_data():
         db.commit()
         cursor.close()
         #print ('INSERTED MYSQL: ' +(row))
-        print "MySQL transfer complete"
+        print("MySQL transfer complete")
     except Exception as e:
-        print ("Something went wrong")
-        print (e)
+        print("Something went wrong")
+        print(e)
         db.rollback()
         db.close()
 
@@ -247,7 +255,7 @@ if __name__ == '__main__':
 
     # wait for last ip in list to create file in wd
     wait_time()
-    # Retry errors
+    # Retry any errors
     retry_errors()
     # convert .json to .csv
     conv_csv()
@@ -255,4 +263,4 @@ if __name__ == '__main__':
     insert_data()
 
     elapsed_time = time.time() - start_time
-    print ("Script run time = " + time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+    print("Script run time = " + time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
