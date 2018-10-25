@@ -94,7 +94,7 @@ def get_worker(ip,device):
         print("Get_ERROR - {}, {}".format(ip,error))
         logger.error(". Get Error    {}   \t    {}".format(ip, error))
         #change file path to your directory
-        with open (wd +"conn_error.txt", "a") as efile:
+        with open ("{}conn_error.txt".format(wd), "a") as efile:
             if 'unicode' in str(error):
                 with open ("{}conn_error_unicode.txt".format(wd), "a") as efile2:
                     efile2.write(ip+"\n")
