@@ -148,7 +148,7 @@ def wait_time():
                 print("Waiting...")
                 time.sleep(5)
         except Exception as e100:
-            print("DEVICE LIST ERROR: {}".foramt(e100))
+            print("DEVICE LIST ERROR: {}".format(e100))
 
 #-------------------------------------------------------------
 def conv_csv():
