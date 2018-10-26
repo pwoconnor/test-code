@@ -207,6 +207,7 @@ def main(ip, username, password):
 
 if __name__ == '__main__':
     #set working directory for tmp files
+    #test pull req
     wd = expanduser('~/python/temp/')
     #set up threading to utilize (max_threads count) concurrent SSH connections
     threads = []
@@ -218,7 +219,7 @@ if __name__ == '__main__':
     tpass = getpass.getpass("Enter TACACS Password: ")
     muser = raw_input("Enter MySQL Username: ")
     mpass = getpass.getpass("Enter MySQL Password: ")
-    
+
     start_time = time.time()
     # Delete files created from past run
     del_temp_files()
