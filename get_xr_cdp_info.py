@@ -17,7 +17,13 @@ import MySQLdb
 import textfsm
 import pandas as pd
 
-
+#-----------------------------------------------------------
+def get_wd():
+    """Create directory for file output"""
+    wd = os.path.expanduser('~/python/temp/')
+    if not os.path.exists(wd):
+            os.makedirs(wd)
+    return wd
 #-----------------------------------------------------------
 def del_temp_files():
     """Delete temporary files that were created on the previous run"""
@@ -207,8 +213,7 @@ def main(ip, username, password):
 
 if __name__ == '__main__':
     #set working directory for tmp files
-    #test pull req
-    wd = expanduser('~/python/temp/')
+    wd = get_wd()
     #set up threading to utilize (max_threads count) concurrent SSH connections
     threads = []
     max_threads = 100
